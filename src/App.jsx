@@ -5,35 +5,55 @@ import "./App.css";
 import { use } from "react";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [posts, setPosts] = useState([]);
-  useEffect(() => {
-    fetch("https://jsonplaceholder.typicode.com/posts?_limit=5")
-      .then((response) => response.json())
-      .then((data) => setPosts(data));
+  const [todosText, setTodosText] = useState("");
+  const [todos, setTodos] = useState([]);
+  const [completed, setCompleted] = useState(false);
+
+
+  const getTodos = async () => {
+    const response = await fetch("http://localhost:3000/todos");
+    const data = await response.json();
+    setTodos(data);
   }
-  , []);
+  useEffect(() => {
+    getTodos();
+  }, []);
+  const submitHandler = async(e) => {
+    e.preventDefault();
+    const newtodo = {
+      title: todosText,
+      completed: false,
+    };
+    await fetch("http://localhost:3000/todos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newtodo),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setTodos([...todos, data]);
+        setTodosText("");
+     });
+     await getTodos();
+
+  }
   return (
     <div className="App">
-      <div className="count">
-        <h2>Counter is : {count}</h2>
-        <button onClick={() => setCount(count+1)}>Increment</button>
-      </div>
-      <div className="posts">
-        <h2>All Posts</h2>
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-          }}>
-          {posts.map((post) => (
-            <li key={post.id} className="post">
-              <h3>{post.title}</h3>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <form onSubmit={submitHandler}> 
+        <input type="text"  value={todosText} onChange={(e)=>setTodosText(e.target.value)}/>
+        <button>Add</button>
+      </form>
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>
+            <input type="checkbox" checked={todo.completed}/>
+            <span>{todo.title}</span>
+            <button>Delete</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
